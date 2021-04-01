@@ -21,7 +21,14 @@ namespace DevCarsAPI.Controllers
 
         [HttpPost]
 
-        public IActionResult Post() => Ok();
+        public IActionResult Post([FromBody] AddCostumerInputModel model)
+        {
+            var costumer = new Costumer(4, model.FullName, model.Document, model.BirthDate);
+
+            _dbContext.Costumers.Add(costumer);
+
+            return NoContent();
+        }
 
         [HttpGet("{Id}/{orderId}")]
 
@@ -30,11 +37,11 @@ namespace DevCarsAPI.Controllers
             var costumer = _dbContext.Costumers.SingleOrDefault(c => c.Id == Id);
             var order = costumer.Orders.SingleOrDefault(e => e.Id == orderId);
 
-            if( costumer == null || order == null) return NotFound();
+            if (costumer == null || order == null) return NotFound();
 
             var extraItems = order.ExtraItems.Select(e => e.Description).ToList();
-     
-            var orderViewModel = new OrderDetailsViewModel(order.IdCar,order.IdCostumer,order.TotalCost,extraItems);
+
+            var orderViewModel = new OrderDetailsViewModel(order.IdCar, order.IdCostumer, order.TotalCost, extraItems);
 
             return Ok(orderViewModel);
         }
@@ -52,7 +59,7 @@ namespace DevCarsAPI.Controllers
 
             if (car == null || costumer == null) return NotFound();
 
-            var order = new Order(1,model.IdCar,model.IdCostumer,car.Price,extraItems);
+            var order = new Order(1, model.IdCar, model.IdCostumer, car.Price, extraItems);
 
             costumer.Purchase(order);
 
