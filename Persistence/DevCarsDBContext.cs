@@ -21,7 +21,7 @@ namespace DevCarsAPI.Persistence
             Costumers = new List<Costumer>
             {
                 new Costumer(1,"Guilherme Rocha Muzi Franco","123456789",new DateTime(1992,5,6)),
-                new Costumer(1,"Gabriel Meneses Love Youu guy","123456789",new DateTime(1998,9,25)),
+                new Costumer(2,"Gabriel Meneses Love Youu guy","123456789",new DateTime(1998,9,25)),
                 new Costumer(3,"Thales Paixão vai pegar a @Becks","XXXTENTATION",new DateTime(2001,8,26))
             };
         }
