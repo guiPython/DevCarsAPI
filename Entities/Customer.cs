@@ -5,17 +5,16 @@ using System.Threading.Tasks;
 
 namespace DevCarsAPI.Entities
 {
-    public class Costumer
+    public class Customer
     {
-        public Costumer(int id, string fullName, string document, DateTime birthDate)
+        protected Customer() { }
+        public Customer(string fullName, string document, DateTime birthDate)
         {
-            Id = id;
             FullName = fullName;
             Document = document;
             BirthDate = birthDate;
             Orders = new List<Order>();
         }
-
         public int Id { get; private set; }
 
         public string FullName { get; private set; }
@@ -26,6 +25,5 @@ namespace DevCarsAPI.Entities
 
         public List<Order> Orders { get; private set; }
 
-        public void Purchase(Order order) => Orders.Add(order);
     }
 }

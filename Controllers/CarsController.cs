@@ -3,10 +3,8 @@ using DevCarsAPI.InputModels;
 using DevCarsAPI.Persistence;
 using DevCarsAPI.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace DevCarsAPI.Controllers
 {
@@ -58,9 +56,10 @@ namespace DevCarsAPI.Controllers
         {
             if (model.Model.Length > 50) return BadRequest("Modelo não pode ter mais de 50 caracteres");
 
-            var car = new Car(5, model.VinCode, model.Brand, model.Model, model.Year, model.Price, model.Color, model.ProductionDate);
+            var car = new Car(model.VinCode, model.Brand, model.Model, model.Year, model.Price, model.Color, model.ProductionDate);
 
             _dbContext.Cars.Add(car);
+            _dbContext.SaveChanges();
 
             return CreatedAtAction(
                 nameof(GetById),
@@ -81,6 +80,8 @@ namespace DevCarsAPI.Controllers
 
             car.Update(model.Color, model.Price);
 
+            _dbContext.SaveChanges();
+
             return NoContent();
         }
 
@@ -93,6 +94,7 @@ namespace DevCarsAPI.Controllers
             if (car == null) return NotFound();
 
             car.SetAsSuspended();
+            _dbContext.SaveChanges();
 
             return NoContent();
         }

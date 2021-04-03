@@ -3,6 +3,7 @@ using DevCarsAPI.InputModels;
 using DevCarsAPI.Persistence;
 using DevCarsAPI.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,9 +24,10 @@ namespace DevCarsAPI.Controllers
 
         public IActionResult Post([FromBody] AddCostumerInputModel model)
         {
-            var costumer = new Costumer(4, model.FullName, model.Document, model.BirthDate);
+            var costumer = new Customer(model.FullName, model.Document, model.BirthDate);
 
-            _dbContext.Costumers.Add(costumer);
+            _dbContext.Customers.Add(costumer);
+            _dbContext.SaveChanges();
 
             return NoContent();
         }
@@ -34,10 +36,12 @@ namespace DevCarsAPI.Controllers
 
         public IActionResult GetOrder(int Id, int orderId)
         {
-            var costumer = _dbContext.Costumers.SingleOrDefault(c => c.Id == Id);
-            var order = costumer.Orders.SingleOrDefault(e => e.Id == orderId);
+  
+            var order = _dbContext.Orders
+                .Include(o => o.ExtraItems)
+                .SingleOrDefault(e => e.Id == orderId);
 
-            if (costumer == null || order == null) return NotFound();
+            if  (order == null) return NotFound();
 
             var extraItems = order.ExtraItems.Select(e => e.Description).ToList();
 
@@ -55,13 +59,14 @@ namespace DevCarsAPI.Controllers
             var extraItems = model.ExtraItems.Select(e => new ExtraOrderItem(e.Description, e.Price)).ToList();
 
             var car = _dbContext.Cars.SingleOrDefault(c => c.Id == model.IdCar);
-            var costumer = _dbContext.Costumers.SingleOrDefault(c => c.Id == model.IdCostumer);
+            var costumer = _dbContext.Customers.SingleOrDefault(c => c.Id == model.IdCostumer);
 
             if (car == null || costumer == null) return NotFound();
 
-            var order = new Order(1, model.IdCar, model.IdCostumer, car.Price, extraItems);
+            var order = new Order(model.IdCar, model.IdCostumer, car.Price, extraItems);
 
-            costumer.Purchase(order);
+            _dbContext.Orders.Add(order);
+            _dbContext.SaveChanges();
 
             return CreatedAtAction(
                     nameof(GetOrder),
@@ -74,11 +79,12 @@ namespace DevCarsAPI.Controllers
 
         public IActionResult Delete(int Id)
         {
-            var costumer = _dbContext.Costumers.SingleOrDefault(c => c.Id == Id);
+            var costumer = _dbContext.Customers.SingleOrDefault(c => c.Id == Id);
 
             if (costumer == null) return NotFound();
 
-            _dbContext.Costumers.Remove(costumer);
+            _dbContext.Customers.Remove(costumer);
+            _dbContext.SaveChanges();
 
             return NoContent();
         }
@@ -87,7 +93,7 @@ namespace DevCarsAPI.Controllers
 
         public IActionResult DeleteOrder(int Id, int orderId)
         {
-            var costumer = _dbContext.Costumers.SingleOrDefault(c => c.Id == Id);
+            var costumer = _dbContext.Customers.SingleOrDefault(c => c.Id == Id);
 
             if (costumer == null) return NotFound();
 
@@ -96,6 +102,7 @@ namespace DevCarsAPI.Controllers
             if (order == null) return NotFound();
 
             costumer.Orders.Remove(order);
+            _dbContext.SaveChanges();
 
             return NoContent();
         }

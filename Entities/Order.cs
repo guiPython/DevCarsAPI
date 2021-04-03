@@ -7,9 +7,9 @@ namespace DevCarsAPI.Entities
 {
     public class Order
     {
-        public Order(int id, int idCar, int idCostumer, decimal Price ,List<ExtraOrderItem> items)
+        protected Order() { }
+        public Order(int idCar, int idCostumer, decimal Price ,List<ExtraOrderItem> items)
         {
-            Id = id;
             IdCar = idCar;
             IdCostumer = idCostumer;
             TotalCost = items.Sum(i => i.Price) + Price;
@@ -18,7 +18,9 @@ namespace DevCarsAPI.Entities
 
         public int Id { get; private set; }
         public int IdCar { get; private set; }
+        public Car Car { get; private set; }
         public int IdCostumer { get; private set; }
+        public Customer Customer { get; private set; }
         public decimal TotalCost { get; private set; }
         public List<ExtraOrderItem> ExtraItems { get; private set; }
     }
