@@ -1,8 +1,13 @@
-﻿using DevCarsAPI.Entities;
+﻿using Dapper;
+using DevCarsAPI.Entities;
 using DevCarsAPI.InputModels;
 using DevCarsAPI.Persistence;
 using DevCarsAPI.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Linq;
 
 
@@ -12,20 +17,30 @@ namespace DevCarsAPI.Controllers
     public class CarsController : ControllerBase
     {
         private readonly DevCarsDBContext _dbContext;
-        public CarsController(DevCarsDBContext dBContext)
+        private readonly string _connectionString;
+        public CarsController(DevCarsDBContext dBContext, IConfiguration configuration)
         {
             _dbContext = dBContext;
+            _connectionString = configuration.GetConnectionString("DevCarsCs");
+            // _connectionString = _dbContext.Database.GetDbConnection().ConnectionString;
         }
 
-        [HttpGet]
 
+        [HttpGet]
         public IActionResult Get()
         {
-            var cars = _dbContext.Cars;
+            /*var cars = _dbContext.Cars;
 
-            var carsViewModel = cars.Select(c => new CarItemViewModel(c.Id, c.Brand, c.Model, c.Price)).ToList();
+            var carsViewModel = cars.Select(c => new CarItemViewModel(c.Id, c.Brand, c.Model, c.Price)).ToList();*/
 
-            return Ok(carsViewModel);
+            using (var sqlConnection = new SqlConnection(_connectionString))
+            {
+                var query = "SELECT Id, Brand, Model, Price FROM Cars Where Status = 0";
+
+                var carsViewModel = sqlConnection.Query<CarItemViewModel>(query);
+
+                return Ok(carsViewModel);
+            }
         }
 
         [HttpGet("{Id}")]
@@ -50,8 +65,29 @@ namespace DevCarsAPI.Controllers
             return Ok(carViewModel);
         }
 
-        [HttpPost]
 
+        /// <summary>
+        /// Cadastrar Carro
+        /// </summary>
+        /// <remarks>
+        /// Requisição de exemplo:
+        /// {
+        ///     "brand": "Toyota",
+        ///     "model": "Corolla",
+        ///     "VinCode": "abc123",
+        ///     "year": 2021,
+        ///     "color": "Cinza",
+        ///     "productionDate": "2021-04-05"
+        /// }
+        /// </remarks>
+        /// <param name="model">Dados de um novo Carro</param>
+        /// <returns>Objeto recém-criado</returns>
+        /// <response code="201">Obejto criado com sucesso.</response>
+        /// <response code="400">Dados inválidos.</response>
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult Post([FromBody] AddCarInputModel model)
         {
             if (model.Model.Length > 50) return BadRequest("Modelo não pode ter mais de 50 caracteres");
@@ -68,8 +104,29 @@ namespace DevCarsAPI.Controllers
             );
         }
 
-        [HttpPut("{Id}")]
 
+
+        /// <summary>
+        /// Atualizar dados de um Carro
+        /// </summary>
+        /// <remarks>
+        /// Requisição de exemplo:
+        /// {
+        ///     "price": "50000",
+        ///     "color": "Cinza",
+        /// }
+        /// </remarks>
+        /// <param name="Id">Identificador de um Carro</param>
+        /// <param name="model">Dados de alteração</param>
+        /// <returns>Objeto recém-criado</returns>
+        /// <response code="204">Atualização bem-sucedida</response>
+        /// <response code="400">Dados inválidos.</response>
+        /// <response code="404">Carro não encontrado</response>
+
+        [HttpPut("{Id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult Put(int Id, [FromBody] UpdateCarInputModel model)
         {
             if (model.Price < 0) return BadRequest("Preço não pode ser menor que 0");
@@ -80,7 +137,14 @@ namespace DevCarsAPI.Controllers
 
             car.Update(model.Color, model.Price);
 
-            _dbContext.SaveChanges();
+            using( var sqlConnection = new SqlConnection(_connectionString))
+            {
+                var query = "UPDATE Cars SET Color = @color, Price = @price WHERE Id = @id";
+
+                sqlConnection.Execute(query, new { car.Color, car.Price, car.Id });
+            }
+
+            //_dbContext.SaveChanges();
 
             return NoContent();
         }
