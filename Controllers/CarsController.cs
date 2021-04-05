@@ -135,7 +135,7 @@ namespace DevCarsAPI.Controllers
 
             if (car == null) return NotFound();
 
-            car.Update(model.Color, model.Price);
+            //car.Update(model.Color, model.Price);
 
             using( var sqlConnection = new SqlConnection(_connectionString))
             {
@@ -143,8 +143,6 @@ namespace DevCarsAPI.Controllers
 
                 sqlConnection.Execute(query, new { car.Color, car.Price, car.Id });
             }
-
-            //_dbContext.SaveChanges();
 
             return NoContent();
         }
